@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
+using Newtonsoft.Json;
 using TrackAll_Backend.Database;
 using TrackAll_Backend.HelperModels;
 using TrackAll_BackEnd.HelperModels;
@@ -20,17 +19,19 @@ namespace TrackAll_Backend.Controllers
         private readonly AppDbContext context;
         static HttpClient client = new HttpClient();
 
-        public AuthorizationController(SignInManager<IdentityModel> signInManager,UserManager<IdentityModel> userManager,AppDbContext context)
+        public AuthorizationController(SignInManager<IdentityModel> signInManager, UserManager<IdentityModel> userManager, AppDbContext context)
         {
             this.signInManager = signInManager;
             this.userManager = userManager;
             this.context = context;
         }
 
-        [HttpPost]
-        public async Task<ActionResult> SignUp([FromBody] SignUpModel model)
+        [HttpPost("{data}")]
+        [EnableCors("AllowAll")]
+        public async Task<ActionResult> SignUp([FromForm]SignUpModel model)
         {
-            var user = new IdentityModel { UserName = model.Email, Email = model.Email, Name = model.Name, PhoneNumber = model.Phone };
+            
+            var user = new IdentityModel { RestId = Guid.NewGuid(), UserName = model.Email, Email = model.Email, Name = model.Name,RestaurantName = model.RestaurantName };
             var result = await userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
@@ -81,7 +82,7 @@ namespace TrackAll_Backend.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> MarketPlaces([FromBody]MarketPlaceConnection marketPlace)
+        public async Task<IActionResult> MarketPlaces([FromBody] MarketPlaceConnection marketPlace)
         {
             if (marketPlace is null)
                 return BadRequest("Invalid Object");
@@ -126,8 +127,8 @@ namespace TrackAll_Backend.Controllers
                 count++;
                 marketPlaceMap.UberEats = (marketPlace.UberEats);
             }
-            
-            if(count==0)
+
+            if (count == 0)
                 return BadRequest("Invalid Credentials or Credentials Not Provided");
 
             await context.MarketPlaceMaps.AddAsync(marketPlaceMap);

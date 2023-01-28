@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Test_Series.Services;
 using TrackAll_Backend.Database;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,7 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddIdentity<IdentityModel, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
+builder.Services.AddScoped<IUserServices, UserServices>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

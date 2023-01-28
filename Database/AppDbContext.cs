@@ -1,11 +1,10 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TrackAll_BackEnd.Models;
 
 namespace TrackAll_Backend.Database
 {
-    public class AppDbContext: IdentityDbContext<IdentityModel>
+    public class AppDbContext : IdentityDbContext<IdentityModel>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -18,6 +17,6 @@ namespace TrackAll_Backend.Database
         }
 
         public DbSet<MarketPlaceMap> MarketPlaceMaps { get; set; }
-        
+
     }
 }

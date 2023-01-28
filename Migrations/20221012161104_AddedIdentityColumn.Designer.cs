@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TrackAll_Backend.Database;
 
@@ -11,13 +12,14 @@ using TrackAll_Backend.Database;
 namespace TrackAllBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221012161104_AddedIdentityColumn")]
+    partial class AddedIdentityColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.10")
+                .HasAnnotation("ProductVersion", "6.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
@@ -204,10 +206,6 @@ namespace TrackAllBackend.Migrations
                     b.Property<Guid>("RestId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("RestaurantName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -237,20 +235,20 @@ namespace TrackAllBackend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("FoodPanda")
+                    b.Property<Guid>("FoodPanda")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("RestaurantId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid?>("Swiggy")
+                    b.Property<Guid>("Swiggy")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("UberEats")
+                    b.Property<Guid>("UberEats")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("Zomato")
+                    b.Property<Guid>("Zomato")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");

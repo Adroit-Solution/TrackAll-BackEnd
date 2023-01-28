@@ -1,6 +1,4 @@
-﻿using TrackAll_Backend.Database;
-
-namespace TrackAll_BackEnd.HelperModels
+﻿namespace TrackAll_BackEnd.HelperModels
 {
     public class MarketPlaceConnection
     {

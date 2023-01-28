@@ -8,9 +8,9 @@ namespace TrackAll_BackEnd.Models
         [Key]
         public Guid Id { get; set; }
         public IdentityModel Restaurant { get; set; }
-        public Guid Zomato { get; set; }
-        public Guid Swiggy { get; set; }
-        public Guid UberEats { get; set; }
-        public Guid FoodPanda { get; set; }
+        public Guid? Zomato { get; set; }
+        public Guid? Swiggy { get; set; }
+        public Guid? UberEats { get; set; }
+        public Guid? FoodPanda { get; set; }
     }
 }

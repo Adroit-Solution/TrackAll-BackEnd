@@ -7,6 +7,8 @@ namespace TrackAll_Backend.HelperModels
         [Required]
         public string Name { get; set; }
         [Required]
+        public string RestaurantName { get; set; }
+        [Required]
         public string Number { get; set; }
         [Required]
         [EmailAddress]
@@ -15,6 +17,6 @@ namespace TrackAll_Backend.HelperModels
         public string Password { get; set; }
         [Required]
         public string ConfirmPassword { get; set; }
-        public string Phone { get; set; }
+        
     }
 }
