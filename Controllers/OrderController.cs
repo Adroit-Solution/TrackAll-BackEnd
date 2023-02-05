@@ -1,14 +1,19 @@
 ﻿using MarketPlace_Orders.Models;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 using Newtonsoft.Json;
 using NuGet.Packaging;
+using Orders.Hubs;
 using System;
 using System.Net.Http.Headers;
 using Test_Series.Services;
 using TrackAll_Backend.Database;
+using TrackAll_BackEnd.HelperModels;
 using TrackAll_BackEnd.Models;
+using static NuGet.Packaging.PackagingConstants;
 
 namespace TrackAll_BackEnd.Controllers
 {
@@ -18,12 +23,12 @@ namespace TrackAll_BackEnd.Controllers
     public class OrderController : ControllerBase
     {
         private readonly AppDbContext appDbContext;
+        private readonly IHubContext<SignalServer> hubContext;
 
-
-        public OrderController(AppDbContext appDbContext, IUserServices userServices)
+        public OrderController(AppDbContext appDbContext,IHubContext<SignalServer> hubContext)
         {
             this.appDbContext = appDbContext;
-
+            this.hubContext = hubContext;
         }
 
         [HttpGet("{restaurantId}")]
@@ -95,7 +100,7 @@ namespace TrackAll_BackEnd.Controllers
             //}
             //return Ok(orders.OrderByDescending(a => a.OrderTime));
 
-            List<OrderApi> orderList = new List<OrderApi>();
+            List<Order> orderList = new List<Order>();
 
             HttpClient httpClient = new HttpClient();
             //httpClient.BaseAddress = new Uri("http://localhost:5226/api/api/");
@@ -107,7 +112,7 @@ namespace TrackAll_BackEnd.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var orders = await response.Content.ReadAsStringAsync();
-                var order = JsonConvert.DeserializeObject<List<OrderApi>>(orders);
+                var order = JsonConvert.DeserializeObject<List<Order>>(orders);
                 orderList.AddRange(order);
             }
 
@@ -115,7 +120,7 @@ namespace TrackAll_BackEnd.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var orders = await response.Content.ReadAsStringAsync();
-                var order = JsonConvert.DeserializeObject<List<OrderApi>>(orders);
+                var order = JsonConvert.DeserializeObject<List<Order>>(orders);
                 orderList.AddRange(order);
             }
 
@@ -123,7 +128,7 @@ namespace TrackAll_BackEnd.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var orders = await response.Content.ReadAsStringAsync();
-                var order = JsonConvert.DeserializeObject<List<OrderApi>>(orders);
+                var order = JsonConvert.DeserializeObject<List<Order>>(orders);
                 orderList.AddRange(order);
             }
 
@@ -131,7 +136,7 @@ namespace TrackAll_BackEnd.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var orders = await response.Content.ReadAsStringAsync();
-                var order = JsonConvert.DeserializeObject<List<OrderApi>>(orders);
+                var order = JsonConvert.DeserializeObject<List<Order>>(orders);
                 orderList.AddRange(order);
             }
 
@@ -142,7 +147,46 @@ namespace TrackAll_BackEnd.Controllers
             return Ok(orderList.OrderByDescending(a => a.OrderTime));
         }
 
+        [HttpPost]
+        public async Task<ActionResult> GetOrderFromMarketPlace([FromBody] OrderApi order)
+        {
+            var user = await appDbContext.Users.FindAsync(order.RestaurantId);
+            if (user == null)
+            {
+                return BadRequest("Restaurant not found");
+            }
+            Order newOrder = new()
+            {
+                Id = Guid.NewGuid(),
+                OrderId = order.OrderId,
+                CustomerName = order.CustomerName,
+                Location = order.Location,
+                DeliveryBoyName = order.DeliveryBoyName,
+                BoyPhone = order.BoyPhone,
+                MarketPlaceName = order.MarketPlaceName,
+                ItemName = order.ItemName,
+                Price = order.Price,
+                Status = order.Status,
+                OrderTime = order.OrderTime,
+                OrderNo = order.OrderNo,
+                ToPrepare = order.ToPrepare,
+                Restaurant = user
+            };
+
+            await appDbContext.Orders.AddAsync(newOrder);
+            var changedOrder = await appDbContext.SaveChangesAsync();
+
+            if (changedOrder > 0)
+            {
+                await hubContext.Clients.Group(order.RestaurantId.ToString()).SendAsync("ReceiveOrder", newOrder);
+                return Ok(IdentityResult.Success);
+            }
+            return BadRequest(IdentityResult.Failed());
+
+        }
+
         [HttpPut("{marketPlaceName}/{orderId}/{dateTime}")]
+        
         public async Task<IActionResult> PutAcceptOrder(string marketPlaceName, Guid orderId, int dateTime)
         {
             HttpClient httpClient = new HttpClient();
@@ -172,7 +216,7 @@ namespace TrackAll_BackEnd.Controllers
                 return Ok();
             }
 
-            return BadRequest();
+            return BadRequest(response);
         }
 
         [HttpPut("{marketPlaceName}/{orderId}")]

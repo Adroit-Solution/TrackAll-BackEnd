@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Test_Series.Services;
 using TrackAll_Backend.Database;
 using TrackAll_Backend.HelperModels;
 using TrackAll_BackEnd.HelperModels;
@@ -17,37 +19,48 @@ namespace TrackAll_Backend.Controllers
         private readonly SignInManager<IdentityModel> signInManager;
         private readonly UserManager<IdentityModel> userManager;
         private readonly AppDbContext context;
+        private readonly IUserServices userServices;
         static HttpClient client = new HttpClient();
 
-        public AuthorizationController(SignInManager<IdentityModel> signInManager, UserManager<IdentityModel> userManager, AppDbContext context)
+        public AuthorizationController(SignInManager<IdentityModel> signInManager, UserManager<IdentityModel> userManager, AppDbContext context,IUserServices userServices)
         {
             this.signInManager = signInManager;
             this.userManager = userManager;
             this.context = context;
+            this.userServices = userServices;
         }
 
-        [HttpPost("{data}")]
+        [HttpPost]
         [EnableCors("AllowAll")]
-        public async Task<ActionResult> SignUp([FromForm]SignUpModel model)
+        public async Task<IActionResult> SignUp([FromBody]SignUpModel model)
         {
-            
+            var isUserPresent = await userManager.FindByEmailAsync(model.Email);
+            if(isUserPresent is not null)
+            {
+                var isSetUp = await context.MarketPlaceMaps.FirstOrDefaultAsync(a => a.Restaurant == isUserPresent);
+                if (isSetUp is not null)
+                    return (IActionResult)IdentityResult.Failed(new IdentityError() { Description = "User Already Present" });
+                else
+                    return Ok(IdentityResult.Success);
+            }
             var user = new IdentityModel { RestId = Guid.NewGuid(), UserName = model.Email, Email = model.Email, Name = model.Name,RestaurantName = model.RestaurantName };
             var result = await userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
-                return Ok("User created successfully!");
+                return Ok(result.Succeeded);
             }
 
             return BadRequest(result.Errors);
         }
 
         [HttpPost]
+        [EnableCors("AllowAll")]
         public async Task<IActionResult> SignIn([FromBody] SignInModel signInModel)
         {
             var result = await signInManager.PasswordSignInAsync(signInModel.Email, signInModel.Password, signInModel.IsPersistent, false);
             if (result.Succeeded)
             {
-                return Ok("Signed In");
+                return Ok(result.Succeeded);
             }
             return BadRequest(result);
         }
@@ -129,15 +142,15 @@ namespace TrackAll_Backend.Controllers
             }
 
             if (count == 0)
-                return BadRequest("Invalid Credentials or Credentials Not Provided");
+                return BadRequest(IdentityResult.Failed(new IdentityError() { Code = "Invalid", Description = "Invalid Credentials" }));
 
             await context.MarketPlaceMaps.AddAsync(marketPlaceMap);
             var changes = await context.SaveChangesAsync();
             if (changes > 0)
             {
-                return Ok("Market Places ConnectionsEstablished");
+                return Ok(IdentityResult.Success);
             }
-            return BadRequest("Market Places Connections Failed");
+            return BadRequest(IdentityResult.Failed(new IdentityError() { Code = "Invalid", Description = "Invalid Credentials" }));
         }
 
     }

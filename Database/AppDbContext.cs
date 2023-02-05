@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using MarketPlace_Orders.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Protocol.Core.Types;
 using TrackAll_BackEnd.Models;
 
 namespace TrackAll_Backend.Database
@@ -17,6 +19,8 @@ namespace TrackAll_Backend.Database
         }
 
         public DbSet<MarketPlaceMap> MarketPlaceMaps { get; set; }
+        public DbSet<ProductModel> Inventory { get; set; }
+        public DbSet<Order> Orders{ get; set; }
 
     }
 }

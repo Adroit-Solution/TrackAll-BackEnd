@@ -1,8 +1,11 @@
 ﻿using MarketPlace_Orders.Models;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
+using Test_Series.Services;
+using TrackAll_Backend.Database;
 
 namespace TrackAll_BackEnd.Controllers
 {
@@ -11,9 +14,13 @@ namespace TrackAll_BackEnd.Controllers
     [ApiController]
     public class AnalyticsController : ControllerBase
     {
-        public AnalyticsController()
+        private readonly IUserServices userServices;
+        private readonly UserManager<IdentityModel> userManager;
+
+        public AnalyticsController(IUserServices userServices,UserManager<IdentityModel> userManager)
         {
-            
+            this.userServices = userServices;
+            this.userManager = userManager;
         }
         
         #region Analytics
@@ -29,7 +36,7 @@ namespace TrackAll_BackEnd.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var data = await response.Content.ReadAsStringAsync();
-                var orders = JsonConvert.DeserializeObject<List<OrderApi>>(data);
+                var orders = JsonConvert.DeserializeObject<List<Order>>(data);
 
                 var allData = new { TotalSales = orders.Sum(x => x.Price), TotalOrders = orders.Count(), CancelledOrder = orders.Count(x => x.Status == "Cancelled"), NewCustomer = orders.Count(x => x.OrderNo == 1) };
 
@@ -65,7 +72,7 @@ namespace TrackAll_BackEnd.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var data = await response.Content.ReadAsStringAsync();
-                var orders = JsonConvert.DeserializeObject<List<OrderApi>>(data);
+                var orders = JsonConvert.DeserializeObject<List<Order>>(data);
 
                 var WeekDaysSales = orders.Where(x => x.OrderTime >= DateTime.Now.AddDays(-((int)DateTime.Now.DayOfWeek)).Date).GroupBy(x => x.OrderTime.Date).Select(x => new { Date = x.Key.DayOfWeek.ToString().Substring(0,3), TotalSales = x.Sum(y => y.Price) }).ToList();
 
@@ -95,7 +102,7 @@ namespace TrackAll_BackEnd.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var data = await response.Content.ReadAsStringAsync();
-                var orders = JsonConvert.DeserializeObject<List<OrderApi>>(data);
+                var orders = JsonConvert.DeserializeObject<List<Order>>(data);
 
                 var SalesByMarketPlace = orders.GroupBy(x => x.MarketPlaceName).Select(x => new { MarketPlaceName = x.Key, TotalSales = x.Sum(y => y.Price) }).ToList();
 
@@ -125,7 +132,7 @@ namespace TrackAll_BackEnd.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var data = await response.Content.ReadAsStringAsync();
-                var orders = JsonConvert.DeserializeObject<List<OrderApi>>(data);
+                var orders = JsonConvert.DeserializeObject<List<Order>>(data);
                 int totalSale = orders.Count();
                 var TopProduct = orders.GroupBy(x => x.ItemName).Select(x => new { ProductName = x.Key, Percentage = (x.Count() * 100) / totalSale }).OrderByDescending(x => x.Percentage).Take(5).ToList();
 
